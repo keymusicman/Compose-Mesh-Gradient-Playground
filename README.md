@@ -9,53 +9,16 @@ getting the result back out as an image or as the Kotlin that draws it.
 
 ## What it does
 
-- **Edit the mesh directly.** Drag vertices on the canvas, or select one — or several — and set
-  position, colour and Bézier control points from the panel below. The gradient stays in view while
-  you work, so every change is visible as you make it.
-- **Up to 10 × 10 patches**, with bilinear or bicubic colour interpolation.
-- **Control points with a proper editor.** Each vertex has four tangents (left, top, right,
-  bottom). They are *offsets from the vertex*, so their pad is centred on zero and reaches into
-  negative values. Switching one on seeds the tangent the renderer would have inferred anyway, so
-  the gradient does not jump.
-- **Save, name and reopen meshes.** Stored as JSON in the app's files directory, listed with live
-  thumbnails rendered from the mesh itself rather than cached images.
-- **Full screen** for a clean look at the gradient — no chrome, no vertex markers, system bars
-  hidden. Back returns.
-- **Share as PNG** — the gradient alone, at canvas resolution, with markers excluded.
-- **Share painter code** — the `MeshGradientPainter` call that reproduces the mesh, ready to paste.
-
-## Requirements
-
-`MeshGradientPainter` is an alpha API, so the project is pinned accordingly:
-
 | | |
 |---|---|
-| Compose BOM | `2026.08.00` (ui-graphics `1.13.0-alpha01`) |
-| AGP | `9.5.0-alpha01` |
-| Kotlin | `2.2.10` |
-| minSdk / targetSdk | 24 / 37 |
-
-On API 34+ the renderer uses the platform `Mesh` API with a fragment shader; below that it
-tessellates and draws through hardware-accelerated `drawVertices`. Both paths work — the shader
-path gives smoother bicubic colour.
-
-## Building
-
-```
-./gradlew installDebug
-```
-
-Instrumented tests need a connected device or emulator:
-
-```
-./gradlew connectedDebugAndroidTest
-```
-
-Everything is tested on device rather than on the JVM, because the two things worth testing —
-`org.json` and the renderer's own output — are unavailable or stubbed out in local unit tests. The
-suite covers the JSON codec, the store's seeding rules, PNG export and sharing, painter-code
-generation, and the UI flows including a pixel check that vertex markers never reach the exported
-image.
+| 🎛 **Direct editing** | Drag vertices on the canvas, or select one — or several — and set values from the panel. The gradient stays in view the whole time. |
+| 🔲 **Up to 10 × 10 patches** | Resize the grid at any point, with bilinear or bicubic colour interpolation. |
+| 🎨 **Colour per vertex** | Red, green, blue and alpha sliders, over a checkerboard swatch so transparency reads. |
+| 🪝 **Bézier control points** | Four tangents per vertex, edited as *offsets* on a zero-centred pad. Switching one on seeds the tangent the renderer already inferred, so the gradient never jumps. |
+| 💾 **Save and reopen** | Named meshes kept as JSON, listed with live thumbnails rendered from the mesh itself. |
+| 🖥 **Full screen** | The gradient alone — no chrome, no markers, no system bars. Back returns. |
+| 🖼 **Share as PNG** | The gradient at canvas resolution, markers excluded. |
+| 📋 **Share painter code** | The `MeshGradientPainter` call that reproduces the mesh, ready to paste. |
 
 ## Bundled meshes
 
