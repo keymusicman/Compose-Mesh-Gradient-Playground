@@ -3,7 +3,7 @@
 An Android app for designing mesh gradients with Jetpack Compose's `MeshGradientPainter`, and for
 getting the result back out as an image or as the Kotlin that draws it.
 
-| Playground | Control points | Saved meshes | Full screen |
+| Mesh tab | Vertex tab | Saved meshes | Full screen |
 |---|---|---|---|
 | <img src="docs/playground.png" width="200"> | <img src="docs/control-point.png" width="200"> | <img src="docs/saved-meshes.png" width="200"> | <img src="docs/full-screen.png" width="200"> |
 
