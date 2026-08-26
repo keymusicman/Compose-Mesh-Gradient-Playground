@@ -111,7 +111,7 @@ class MeshGradientPlaygroundTest {
 
     @Test
     fun selectAllSelectsEveryVertex() {
-        scrollSettingsTo(hasText("Select all"))
+        openVertexTab()
 
         rule.onNodeWithText("Select all").performClick()
 
@@ -121,12 +121,46 @@ class MeshGradientPlaygroundTest {
 
     @Test
     fun unselectAllClearsTheSelection() {
-        scrollSettingsTo(hasText("Select all"))
+        openVertexTab()
         rule.onNodeWithText("Select all").performClick()
 
         rule.onNodeWithText("Unselect all").performClick()
 
         rule.onNodeWithText("Select a vertex").assertExists()
+    }
+
+    @Test
+    fun theMeshTabIsTheOneOnScreenUntilAVertexIsPicked() {
+        rule.onNodeWithText("Rows: 1").assertIsDisplayed()
+        rule.onNodeWithText("Select a vertex").assertDoesNotExist()
+
+        rule.onNodeWithContentDescription("Vertex 0, 0").performClick()
+
+        // Picking a vertex moves to its tab, so the mesh sliders give way to the editors.
+        rule.onNodeWithText("Position: 0.0, 0.0").assertIsDisplayed()
+        rule.onNodeWithText("Rows: 1").assertDoesNotExist()
+    }
+
+    @Test
+    fun theVertexTabSaysHowToSelectWhenNothingIsSelected() {
+        openVertexTab()
+
+        rule.onNodeWithText("Tap one on the canvas", substring = true).assertIsDisplayed()
+
+        rule.onNodeWithContentDescription("Vertex 0, 0").performClick()
+
+        // The hint gives way to the editors it was pointing at.
+        rule.onNodeWithText("Tap one on the canvas", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("Position: 0.0, 0.0").assertIsDisplayed()
+    }
+
+    @Test
+    fun theMeshTabIsStillReachableWithAVertexSelected() {
+        rule.onNodeWithContentDescription("Vertex 0, 0").performClick()
+
+        rule.onNodeWithText("Mesh").performClick()
+
+        rule.onNodeWithText("Rows: 1").assertIsDisplayed()
     }
 
     @Test
@@ -160,6 +194,11 @@ class MeshGradientPlaygroundTest {
 
     private fun scrollSettingsTo(matcher: SemanticsMatcher) {
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(matcher)
+    }
+
+    /** The vertex editors live behind their own tab, which only opens itself once a vertex is picked. */
+    private fun openVertexTab() {
+        rule.onNodeWithText("Vertex").performClick()
     }
 
     /**

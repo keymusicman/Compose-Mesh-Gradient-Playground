@@ -15,16 +15,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +45,10 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
+/**
+ * The editing panel, split in two: the mesh as a whole on one tab, the selected vertex on the
+ * other. Only one tab is composed at a time, so each keeps its own scroll position.
+ */
 @Composable
 internal fun MeshSettings(
     rows: Int,
@@ -62,8 +71,69 @@ internal fun MeshSettings(
     onSelectAllToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var selectedTab by rememberSaveable { mutableIntStateOf(MESH_TAB) }
+    val hasSelection = selectedVertex != null
+    // Picking a vertex on the canvas brings its editors up, so that a tap still does something
+    // visible while the mesh tab is the one on screen.
+    LaunchedEffect(hasSelection) {
+        if (hasSelection) selectedTab = VERTEX_TAB
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        PrimaryTabRow(selectedTabIndex = selectedTab) {
+            Tab(
+                selected = selectedTab == MESH_TAB,
+                onClick = { selectedTab = MESH_TAB },
+                text = { Text("Mesh") },
+            )
+            Tab(
+                selected = selectedTab == VERTEX_TAB,
+                onClick = { selectedTab = VERTEX_TAB },
+                text = { Text("Vertex") },
+            )
+        }
+        when (selectedTab) {
+            MESH_TAB -> MeshTab(
+                rows = rows,
+                columns = columns,
+                hasBicubicColor = hasBicubicColor,
+                showVertices = showVertices,
+                onRowsChange = onRowsChange,
+                onColumnsChange = onColumnsChange,
+                onHasBicubicColorChange = onHasBicubicColorChange,
+                onShowVerticesChange = onShowVerticesChange,
+            )
+            else -> VertexTab(
+                rows = rows,
+                columns = columns,
+                selectedVertex = selectedVertex,
+                selectedVertexCount = selectedVertexCount,
+                areAllVerticesSelected = areAllVerticesSelected,
+                onPositionChange = onPositionChange,
+                onColorChange = onColorChange,
+                onLeftControlPointChange = onLeftControlPointChange,
+                onTopControlPointChange = onTopControlPointChange,
+                onRightControlPointChange = onRightControlPointChange,
+                onBottomControlPointChange = onBottomControlPointChange,
+                onSelectAllToggle = onSelectAllToggle,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MeshTab(
+    rows: Int,
+    columns: Int,
+    hasBicubicColor: Boolean,
+    showVertices: Boolean,
+    onRowsChange: (Int) -> Unit,
+    onColumnsChange: (Int) -> Unit,
+    onHasBicubicColorChange: (Boolean) -> Unit,
+    onShowVerticesChange: (Boolean) -> Unit,
+) {
     LazyColumn(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -71,8 +141,29 @@ internal fun MeshSettings(
         item { MeshDimensionSlider("Columns", columns, onColumnsChange) }
         item { SettingCheckbox("Bicubic color", hasBicubicColor, onHasBicubicColorChange) }
         item { SettingCheckbox("Show vertices", showVertices, onShowVerticesChange) }
+    }
+}
 
-        item { HorizontalDivider() }
+@Composable
+private fun VertexTab(
+    rows: Int,
+    columns: Int,
+    selectedVertex: MeshVertex?,
+    selectedVertexCount: Int,
+    areAllVerticesSelected: Boolean,
+    onPositionChange: (Offset) -> Unit,
+    onColorChange: (Color) -> Unit,
+    onLeftControlPointChange: (Offset) -> Unit,
+    onTopControlPointChange: (Offset) -> Unit,
+    onRightControlPointChange: (Offset) -> Unit,
+    onBottomControlPointChange: (Offset) -> Unit,
+    onSelectAllToggle: () -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -91,6 +182,17 @@ internal fun MeshSettings(
                 TextButton(onClick = onSelectAllToggle) {
                     Text(if (areAllVerticesSelected) "Unselect all" else "Select all")
                 }
+            }
+        }
+
+        if (selectedVertex == null) {
+            item {
+                Text(
+                    text = "Tap one on the canvas to edit its position, color and control " +
+                        "points. Tap again to unselect, and pick several to edit them together.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
 
@@ -139,6 +241,9 @@ internal fun MeshSettings(
         }
     }
 }
+
+private const val MESH_TAB = 0
+private const val VERTEX_TAB = 1
 
 @Composable
 private fun SettingCheckbox(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
