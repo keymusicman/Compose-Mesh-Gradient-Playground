@@ -60,6 +60,7 @@ internal fun MeshSettings(
     hasBicubicColor: Boolean,
     showVertices: Boolean,
     hasOrganicDrift: Boolean,
+    hasColorDrift: Boolean,
     selectedVertex: MeshVertex?,
     selectedVertexCount: Int,
     areAllVerticesSelected: Boolean,
@@ -68,6 +69,7 @@ internal fun MeshSettings(
     onHasBicubicColorChange: (Boolean) -> Unit,
     onShowVerticesChange: (Boolean) -> Unit,
     onHasOrganicDriftChange: (Boolean) -> Unit,
+    onHasColorDriftChange: (Boolean) -> Unit,
     onPositionChange: (Offset) -> Unit,
     onColorChange: (Color) -> Unit,
     onLeftControlPointChange: (Offset) -> Unit,
@@ -109,11 +111,13 @@ internal fun MeshSettings(
                     hasBicubicColor = hasBicubicColor,
                     showVertices = showVertices,
                     hasOrganicDrift = hasOrganicDrift,
+                    hasColorDrift = hasColorDrift,
                     onRowsChange = onRowsChange,
                     onColumnsChange = onColumnsChange,
                     onHasBicubicColorChange = onHasBicubicColorChange,
                     onShowVerticesChange = onShowVerticesChange,
                     onHasOrganicDriftChange = onHasOrganicDriftChange,
+                    onHasColorDriftChange = onHasColorDriftChange,
                 )
                 else -> VertexTab(
                     rows = rows,
@@ -141,11 +145,13 @@ private fun MeshTab(
     hasBicubicColor: Boolean,
     showVertices: Boolean,
     hasOrganicDrift: Boolean,
+    hasColorDrift: Boolean,
     onRowsChange: (Int) -> Unit,
     onColumnsChange: (Int) -> Unit,
     onHasBicubicColorChange: (Boolean) -> Unit,
     onShowVerticesChange: (Boolean) -> Unit,
     onHasOrganicDriftChange: (Boolean) -> Unit,
+    onHasColorDriftChange: (Boolean) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -158,6 +164,7 @@ private fun MeshTab(
             MeshCheckboxItem("Bicubic color", hasBicubicColor, onHasBicubicColorChange),
             MeshCheckboxItem("Show vertices", showVertices, onShowVerticesChange),
             MeshCheckboxItem("Organic drift", hasOrganicDrift, onHasOrganicDriftChange),
+            MeshCheckboxItem("Color drift", hasColorDrift, onHasColorDriftChange),
         )
         items(checkboxes, key = { it.label }) { checkbox ->
             SettingCheckbox(checkbox.label, checkbox.checked, checkbox.onCheckedChange)

@@ -72,6 +72,7 @@ fun MeshGradientPlayground() {
     var hasBicubicColor by remember { mutableStateOf(true) }
     var showVertices by remember { mutableStateOf(true) }
     var hasOrganicDrift by remember { mutableStateOf(false) }
+    var hasColorDrift by remember { mutableStateOf(false) }
     var vertices by remember { mutableStateOf(createVertices(rows, columns)) }
     var selectedVertexIndices by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -113,7 +114,9 @@ fun MeshGradientPlayground() {
         selectedVertexIndices = emptySet()
     }
 
-    val painter = rememberMeshPainter(rows, columns, hasBicubicColor, vertices, hasOrganicDrift)
+    val painter = rememberMeshPainter(
+        rows, columns, hasBicubicColor, vertices, hasOrganicDrift, hasColorDrift,
+    )
 
     // Captured when the menu item is tapped, so what gets shared is what was on screen at that
     // moment rather than whatever the layer holds once the share sheet is up.
@@ -237,6 +240,7 @@ fun MeshGradientPlayground() {
                 hasBicubicColor = hasBicubicColor,
                 showVertices = showVertices,
                 hasOrganicDrift = hasOrganicDrift,
+                hasColorDrift = hasColorDrift,
                 selectedVertex = selectedVertexIndices.firstOrNull()?.let(vertices::get),
                 selectedVertexCount = selectedVertexIndices.size,
                 areAllVerticesSelected = selectedVertexIndices.size == vertices.size,
@@ -245,6 +249,7 @@ fun MeshGradientPlayground() {
                 onHasBicubicColorChange = { hasBicubicColor = it },
                 onShowVerticesChange = { showVertices = it },
                 onHasOrganicDriftChange = { hasOrganicDrift = it },
+                onHasColorDriftChange = { hasColorDrift = it },
                 onPositionChange = { value -> updateSelectedVertices { it.copy(position = value) } },
                 onColorChange = { value -> updateSelectedVertices { it.copy(color = value) } },
                 onLeftControlPointChange = { value ->
