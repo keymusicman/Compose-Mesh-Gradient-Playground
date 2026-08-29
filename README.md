@@ -15,6 +15,7 @@ getting the result back out as an image or as the Kotlin that draws it.
 | 🔲 **Up to 10 × 10 patches** | Resize the grid at any point, with bilinear or bicubic colour interpolation. |
 | 🎨 **Colour per vertex** | Red, green, blue and alpha sliders, over a checkerboard swatch so transparency reads. |
 | 🪝 **Bézier control points** | Four tangents per vertex, edited as *offsets* on a zero-centred pad. Switching one on seeds the tangent the renderer already inferred, so the gradient never jumps. |
+| 🌊 **Organic drift** | A checkbox that sets interior vertices swaying back and forth, the same trick behind the animated demos in Google's mesh-gradient docs. Corners and edges stay fixed, so a mesh needs at least 2 × 2 patches for it to do anything. |
 | 💾 **Save and reopen** | Named meshes kept as JSON, listed with live thumbnails rendered from the mesh itself. |
 | 🖥 **Full screen** | The gradient alone — no chrome, no markers, no system bars. Back returns. |
 | 🖼 **Share as PNG** | The gradient at canvas resolution, markers excluded. |

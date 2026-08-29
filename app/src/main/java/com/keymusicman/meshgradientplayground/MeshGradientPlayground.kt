@@ -71,6 +71,7 @@ fun MeshGradientPlayground() {
     var columns by remember { mutableIntStateOf(DEFAULT_COLUMNS) }
     var hasBicubicColor by remember { mutableStateOf(true) }
     var showVertices by remember { mutableStateOf(true) }
+    var hasOrganicDrift by remember { mutableStateOf(false) }
     var vertices by remember { mutableStateOf(createVertices(rows, columns)) }
     var selectedVertexIndices by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -112,7 +113,7 @@ fun MeshGradientPlayground() {
         selectedVertexIndices = emptySet()
     }
 
-    val painter = rememberMeshPainter(rows, columns, hasBicubicColor, vertices)
+    val painter = rememberMeshPainter(rows, columns, hasBicubicColor, vertices, hasOrganicDrift)
 
     // Captured when the menu item is tapped, so what gets shared is what was on screen at that
     // moment rather than whatever the layer holds once the share sheet is up.
@@ -235,6 +236,7 @@ fun MeshGradientPlayground() {
                 columns = columns,
                 hasBicubicColor = hasBicubicColor,
                 showVertices = showVertices,
+                hasOrganicDrift = hasOrganicDrift,
                 selectedVertex = selectedVertexIndices.firstOrNull()?.let(vertices::get),
                 selectedVertexCount = selectedVertexIndices.size,
                 areAllVerticesSelected = selectedVertexIndices.size == vertices.size,
@@ -242,6 +244,7 @@ fun MeshGradientPlayground() {
                 onColumnsChange = { resizeMesh(newColumns = it) },
                 onHasBicubicColorChange = { hasBicubicColor = it },
                 onShowVerticesChange = { showVertices = it },
+                onHasOrganicDriftChange = { hasOrganicDrift = it },
                 onPositionChange = { value -> updateSelectedVertices { it.copy(position = value) } },
                 onColorChange = { value -> updateSelectedVertices { it.copy(color = value) } },
                 onLeftControlPointChange = { value ->

@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Slider
@@ -23,6 +25,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -41,6 +44,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
@@ -55,6 +59,7 @@ internal fun MeshSettings(
     columns: Int,
     hasBicubicColor: Boolean,
     showVertices: Boolean,
+    hasOrganicDrift: Boolean,
     selectedVertex: MeshVertex?,
     selectedVertexCount: Int,
     areAllVerticesSelected: Boolean,
@@ -62,6 +67,7 @@ internal fun MeshSettings(
     onColumnsChange: (Int) -> Unit,
     onHasBicubicColorChange: (Boolean) -> Unit,
     onShowVerticesChange: (Boolean) -> Unit,
+    onHasOrganicDriftChange: (Boolean) -> Unit,
     onPositionChange: (Offset) -> Unit,
     onColorChange: (Color) -> Unit,
     onLeftControlPointChange: (Offset) -> Unit,
@@ -92,31 +98,38 @@ internal fun MeshSettings(
                 text = { Text("Vertex") },
             )
         }
-        when (selectedTab) {
-            MESH_TAB -> MeshTab(
-                rows = rows,
-                columns = columns,
-                hasBicubicColor = hasBicubicColor,
-                showVertices = showVertices,
-                onRowsChange = onRowsChange,
-                onColumnsChange = onColumnsChange,
-                onHasBicubicColorChange = onHasBicubicColorChange,
-                onShowVerticesChange = onShowVerticesChange,
-            )
-            else -> VertexTab(
-                rows = rows,
-                columns = columns,
-                selectedVertex = selectedVertex,
-                selectedVertexCount = selectedVertexCount,
-                areAllVerticesSelected = areAllVerticesSelected,
-                onPositionChange = onPositionChange,
-                onColorChange = onColorChange,
-                onLeftControlPointChange = onLeftControlPointChange,
-                onTopControlPointChange = onTopControlPointChange,
-                onRightControlPointChange = onRightControlPointChange,
-                onBottomControlPointChange = onBottomControlPointChange,
-                onSelectAllToggle = onSelectAllToggle,
-            )
+        // Checkboxes and sliders both reserve a 48.dp touch target by default, which is a lot of
+        // dead vertical space in a panel this dense. Both tabs are edited with a thumb, not tapped
+        // one-handed across a whole screen, so a smaller minimum is a reasonable trade here.
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides COMPACT_TOUCH_TARGET) {
+            when (selectedTab) {
+                MESH_TAB -> MeshTab(
+                    rows = rows,
+                    columns = columns,
+                    hasBicubicColor = hasBicubicColor,
+                    showVertices = showVertices,
+                    hasOrganicDrift = hasOrganicDrift,
+                    onRowsChange = onRowsChange,
+                    onColumnsChange = onColumnsChange,
+                    onHasBicubicColorChange = onHasBicubicColorChange,
+                    onShowVerticesChange = onShowVerticesChange,
+                    onHasOrganicDriftChange = onHasOrganicDriftChange,
+                )
+                else -> VertexTab(
+                    rows = rows,
+                    columns = columns,
+                    selectedVertex = selectedVertex,
+                    selectedVertexCount = selectedVertexCount,
+                    areAllVerticesSelected = areAllVerticesSelected,
+                    onPositionChange = onPositionChange,
+                    onColorChange = onColorChange,
+                    onLeftControlPointChange = onLeftControlPointChange,
+                    onTopControlPointChange = onTopControlPointChange,
+                    onRightControlPointChange = onRightControlPointChange,
+                    onBottomControlPointChange = onBottomControlPointChange,
+                    onSelectAllToggle = onSelectAllToggle,
+                )
+            }
         }
     }
 }
@@ -127,20 +140,38 @@ private fun MeshTab(
     columns: Int,
     hasBicubicColor: Boolean,
     showVertices: Boolean,
+    hasOrganicDrift: Boolean,
     onRowsChange: (Int) -> Unit,
     onColumnsChange: (Int) -> Unit,
     onHasBicubicColorChange: (Boolean) -> Unit,
     onShowVerticesChange: (Boolean) -> Unit,
+    onHasOrganicDriftChange: (Boolean) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item { MeshDimensionSlider("Rows", rows, onRowsChange) }
         item { MeshDimensionSlider("Columns", columns, onColumnsChange) }
-        item { SettingCheckbox("Bicubic color", hasBicubicColor, onHasBicubicColorChange) }
-        item { SettingCheckbox("Show vertices", showVertices, onShowVerticesChange) }
+        val checkboxes = listOf(
+            MeshCheckboxItem("Bicubic color", hasBicubicColor, onHasBicubicColorChange),
+            MeshCheckboxItem("Show vertices", showVertices, onShowVerticesChange),
+            MeshCheckboxItem("Organic drift", hasOrganicDrift, onHasOrganicDriftChange),
+        )
+        items(checkboxes, key = { it.label }) { checkbox ->
+            SettingCheckbox(checkbox.label, checkbox.checked, checkbox.onCheckedChange)
+        }
+        if (hasOrganicDrift && (rows < 2 || columns < 2)) {
+            item {
+                Text(
+                    text = "Only interior vertices drift, and this mesh has none yet — corners " +
+                        "and edges stay put. Try 2 rows and 2 columns or more.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 
@@ -161,8 +192,8 @@ private fun VertexTab(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
             Row(
@@ -245,6 +276,12 @@ private fun VertexTab(
 private const val MESH_TAB = 0
 private const val VERTEX_TAB = 1
 
+private data class MeshCheckboxItem(
+    val label: String,
+    val checked: Boolean,
+    val onCheckedChange: (Boolean) -> Unit,
+)
+
 @Composable
 private fun SettingCheckbox(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
@@ -252,7 +289,12 @@ private fun SettingCheckbox(label: String, checked: Boolean, onCheckedChange: (B
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         Checkbox(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
@@ -301,7 +343,7 @@ private fun OffsetEditor(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             text = "$label: ${value.x.formatOffset()}, ${value.y.formatOffset()}",
@@ -337,7 +379,7 @@ private fun ControlPointEditor(
     val isSpecified = value.isSpecified
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -469,7 +511,7 @@ private fun ClosedFloatingPointRange<Float>.spansZero(): Boolean = start < 0f &&
 private fun ColorEditor(color: Color, onColorChange: (Color) -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text("Color", style = MaterialTheme.typography.labelLarge)
         ColorSwatch(color)
@@ -566,3 +608,10 @@ private const val INFERRED_TANGENT_FRACTION = 0.33f
 private const val OFFSET_GRID_DIVISIONS = 4
 private val OFFSET_PAD_INSET = 16.dp
 private val COMPACT_SLIDER_THUMB_SIZE = DpSize(12.dp, 12.dp)
+
+/**
+ * Replaces Material's default 48.dp minimum touch target for checkboxes and sliders in this
+ * panel. Still comfortably tappable, just without the extra padding that made a stack of them so
+ * tall.
+ */
+private val COMPACT_TOUCH_TARGET = 32.dp
